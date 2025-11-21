@@ -58,12 +58,101 @@ export const findBestMatches = async (role: string, skills: string[]): Promise<s
         }
       }
     });
-    
+
     const text = response.text;
     if (!text) return [];
     return JSON.parse(text);
   } catch (error) {
     console.error("Gemini Matching Error", error);
     return ["Error performing AI match"];
+  }
+};
+
+interface EventReportData {
+  eventName: string;
+  eventDate: string;
+  location: string;
+  description: string;
+  totalVolunteers: number;
+  totalSlots: number;
+  attendanceRate: number;
+}
+
+interface GeneratedReport {
+  executiveSummary: string;
+  keyHighlights: string[];
+  participantInsights: string;
+  impactAnalysis: string;
+  lessonsLearned: string[];
+  recommendations: string[];
+}
+
+export const generateEventReport = async (eventData: EventReportData): Promise<GeneratedReport> => {
+  const ai = getAiClient();
+  if (!ai) {
+    return {
+      executiveSummary: "AI Service Unavailable",
+      keyHighlights: [],
+      participantInsights: "",
+      impactAnalysis: "",
+      lessonsLearned: [],
+      recommendations: []
+    };
+  }
+
+  try {
+    const prompt = `Generate a comprehensive event report for the following completed volunteer event:
+
+Event Name: ${eventData.eventName}
+Date: ${eventData.eventDate}
+Location: ${eventData.location}
+Description: ${eventData.description}
+Volunteers: ${eventData.totalVolunteers} out of ${eventData.totalSlots} slots filled
+Attendance Rate: ${eventData.attendanceRate}%
+
+Please provide:
+1. Executive Summary (2-3 sentences)
+2. Key Highlights (3-5 bullet points)
+3. Participant Insights (1 paragraph about volunteer engagement and demographics)
+4. Impact Analysis (1 paragraph about the event's community impact)
+5. Lessons Learned (2-3 bullet points)
+6. Recommendations for Future Events (2-3 bullet points)
+
+Return as JSON with keys: executiveSummary, keyHighlights (array), participantInsights, impactAnalysis, lessonsLearned (array), recommendations (array)`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            executiveSummary: { type: Type.STRING },
+            keyHighlights: { type: Type.ARRAY, items: { type: Type.STRING } },
+            participantInsights: { type: Type.STRING },
+            impactAnalysis: { type: Type.STRING },
+            lessonsLearned: { type: Type.ARRAY, items: { type: Type.STRING } },
+            recommendations: { type: Type.ARRAY, items: { type: Type.STRING } }
+          },
+          required: ["executiveSummary", "keyHighlights", "participantInsights", "impactAnalysis", "lessonsLearned", "recommendations"]
+        }
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("No response from AI");
+
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Gemini Report Generation Error:", error);
+    return {
+      executiveSummary: "Error generating report summary.",
+      keyHighlights: ["Report generation failed"],
+      participantInsights: "Unable to analyze participant data.",
+      impactAnalysis: "Unable to analyze event impact.",
+      lessonsLearned: ["Error occurred during analysis"],
+      recommendations: ["Please try again later"]
+    };
   }
 };

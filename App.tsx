@@ -11,9 +11,17 @@ import EventManager from './pages/admin/EventManager';
 import Roster from './pages/admin/Roster';
 import BrowseEvents from './pages/volunteer/BrowseEvents';
 import MySchedule from './pages/volunteer/MySchedule';
+import MyCertificates from './pages/volunteer/MyCertificates';
+import Statistics from './pages/volunteer/Statistics';
+// ... existing imports
 import { UserRole } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { EventsProvider } from './contexts/EventsContext';
 import { supabase } from './services/supabaseClient';
+import Reports from './pages/admin/Reports';
+import AttendeeInsights from './pages/admin/AttendeeInsights';
+import Settings from './pages/admin/Settings';
+import AllEvents from './pages/admin/AllEvents';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -99,14 +107,20 @@ const AppContent: React.FC = () => {
           {userRole === UserRole.ADMIN ? (
             <>
               <Route path="/admin" element={<Dashboard />} />
-              <Route path="/admin/events" element={<EventManager />} />
+              <Route path="/admin/events" element={<AllEvents />} />
+              <Route path="/admin/create" element={<EventManager />} />
+              <Route path="/admin/reports" element={<Reports />} />
+              <Route path="/admin/insights" element={<AttendeeInsights />} />
               <Route path="/admin/roster" element={<Roster />} />
+              <Route path="/admin/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </>
           ) : (
             <>
               <Route path="/volunteer" element={<BrowseEvents />} />
               <Route path="/volunteer/schedule" element={<MySchedule />} />
+              <Route path="/volunteer/certificates" element={<MyCertificates />} />
+              <Route path="/volunteer/stats" element={<Statistics />} />
               <Route path="*" element={<Navigate to="/volunteer" replace />} />
             </>
           )}
@@ -119,9 +133,11 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <EventsProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </EventsProvider>
     </AuthProvider>
   );
 };
