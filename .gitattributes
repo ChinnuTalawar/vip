@@ -1,0 +1,16 @@
+* text=auto eol=lf
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.json text
+*.md text
+*.html text
+*.css text
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+.env export-ignore
+.env.* export-ignore
+.DS_Store export-ignore
