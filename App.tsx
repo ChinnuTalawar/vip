@@ -13,7 +13,9 @@ import BrowseEvents from './pages/volunteer/BrowseEvents';
 import MySchedule from './pages/volunteer/MySchedule';
 import MyCertificates from './pages/volunteer/MyCertificates';
 import Statistics from './pages/volunteer/Statistics';
-// ... existing imports
+import Profile from './pages/volunteer/Profile';
+import Leaderboard from './pages/volunteer/Leaderboard';
+import Recommended from './pages/volunteer/Recommended';
 import { UserRole } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { EventsProvider } from './contexts/EventsContext';
@@ -118,9 +120,13 @@ const AppContent: React.FC = () => {
           ) : (
             <>
               <Route path="/volunteer" element={<BrowseEvents />} />
+              <Route path="/volunteer/browse" element={<BrowseEvents />} />
+              <Route path="/volunteer/recommended" element={<Recommended />} />
               <Route path="/volunteer/schedule" element={<MySchedule />} />
               <Route path="/volunteer/certificates" element={<MyCertificates />} />
               <Route path="/volunteer/stats" element={<Statistics />} />
+              <Route path="/volunteer/leaderboard" element={<Leaderboard />} />
+              <Route path="/volunteer/profile" element={<Profile />} />
               <Route path="*" element={<Navigate to="/volunteer" replace />} />
             </>
           )}

@@ -301,3 +301,288 @@ export const deleteUserAccount = async (userId: string): Promise<boolean> => {
     }
     return true;
 };
+
+export const getUserCompletedEvents = async (userId: string): Promise<any[]> => {
+    const { data, error } = await supabase
+        .from('roster_entries')
+        .select(`
+            id,
+            status,
+            shifts (
+                role,
+                start_time,
+                end_time,
+                events (
+                    name,
+                    date
+                )
+            )
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'Completed');
+
+    if (error) {
+        console.error('Error fetching user completed events:', error);
+        return [];
+    }
+
+    return data.map((entry: any) => {
+        const start = new Date(`1970-01-01T${entry.shifts.start_time}`);
+        const end = new Date(`1970-01-01T${entry.shifts.end_time}`);
+        const hours = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60));
+
+        return {
+            id: entry.id,
+            eventName: entry.shifts.events.name,
+            date: entry.shifts.events.date,
+            role: entry.shifts.role,
+            hours: parseFloat(hours.toFixed(1))
+        };
+    });
+};
+
+export const joinEvent = async (userId: string, eventId: string): Promise<{ success: boolean, message?: string, qrCode?: string }> => {
+    try {
+        // 1. Get shifts for the event
+        const { data: shifts, error: shiftsError } = await supabase
+            .from('shifts')
+            .select('id')
+            .eq('event_id', eventId)
+            .limit(1);
+
+        if (shiftsError || !shifts || shifts.length === 0) {
+            return { success: false, message: 'No shifts available for this event.' };
+        }
+
+        const shiftId = shifts[0].id;
+
+        // 2. Check if already joined
+        const { data: existing } = await supabase
+            .from('roster_entries')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('shift_id', shiftId)
+            .single();
+
+        if (existing) {
+            return { success: false, message: 'You have already joined this event.' };
+        }
+
+        // 3. Join (Insert roster entry)
+        // We use the ID as the unique QR code identifier.
+        const { data, error } = await supabase
+            .from('roster_entries')
+            .insert({
+                user_id: userId,
+                shift_id: shiftId,
+                status: 'Confirmed' // Auto-confirm for now
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return { success: true, qrCode: data.id };
+    } catch (error) {
+        console.error('Error joining event:', error);
+        return { success: false, message: 'Failed to join event.' };
+    }
+};
+
+export const getUserSchedule = async (userId: string): Promise<any[]> => {
+    const { data, error } = await supabase
+        .from('roster_entries')
+        .select(`
+            id,
+            status,
+            shifts (
+                id,
+                role,
+                start_time,
+                end_time,
+                events (
+                    id,
+                    name,
+                    date,
+                    location,
+                    image_url
+                )
+            )
+        `)
+        .eq('user_id', userId)
+        .in('status', ['Confirmed', 'Pending', 'CheckIn']);
+
+    if (error) {
+        console.error('Error fetching user schedule:', error);
+        return [];
+    }
+
+    return data.map((entry: any) => ({
+        id: entry.id,
+        eventId: entry.shifts.events.id,
+        eventName: entry.shifts.events.name,
+        eventDate: entry.shifts.events.date,
+        eventLocation: entry.shifts.events.location,
+        eventImage: entry.shifts.events.image_url,
+        role: entry.shifts.role,
+        shiftId: entry.shifts.id,
+        startTime: entry.shifts.start_time,
+        endTime: entry.shifts.end_time,
+        status: entry.status
+    }));
+};
+
+export const getEventShifts = async (eventId: string): Promise<any[]> => {
+    const { data, error } = await supabase
+        .from('shifts')
+        .select('*')
+        .eq('event_id', eventId);
+
+    if (error) {
+        console.error('Error fetching event shifts:', error);
+        return [];
+    }
+    return data;
+};
+
+export const updateRosterShift = async (rosterId: string, newShiftId: string): Promise<boolean> => {
+    const { error } = await supabase
+        .from('roster_entries')
+        .update({ shift_id: newShiftId })
+        .eq('id', rosterId);
+
+    if (error) {
+        console.error('Error updating roster shift:', error);
+        return false;
+    }
+    return true;
+};
+
+export const cancelRosterEntry = async (rosterId: string): Promise<boolean> => {
+    const { error } = await supabase
+        .from('roster_entries')
+        .delete()
+        .eq('id', rosterId);
+
+    if (error) {
+        console.error('Error canceling roster entry:', error);
+        return false;
+    }
+    return true;
+};
+
+export const getAllVolunteers = async (): Promise<any[]> => {
+    const { data, error } = await supabase
+        .from('users')
+        .select(`
+            *,
+            roster_entries(count)
+        `)
+        .eq('role', 'VOLUNTEER');
+
+    if (error) {
+        console.error('Error fetching volunteers:', error);
+        return [];
+    }
+
+    // Map to include event count
+    return data.map((user: any) => ({
+        ...user,
+        eventsCount: user.roster_entries?.[0]?.count || 0
+    }));
+};
+
+// Swap Requests
+export const createSwapRequest = async (senderId: string, receiverId: string, rosterEntryId: string): Promise<boolean> => {
+    // Assuming a 'swap_requests' table exists
+    const { error } = await supabase
+        .from('swap_requests')
+        .insert({
+            sender_id: senderId,
+            receiver_id: receiverId,
+            roster_entry_id: rosterEntryId,
+            status: 'Pending'
+        });
+
+    if (error) {
+        console.error('Error creating swap request:', error);
+        return false;
+    }
+    return true;
+};
+
+export const getPendingSwapRequests = async (userId: string): Promise<any[]> => {
+    const { data, error } = await supabase
+        .from('swap_requests')
+        .select(`
+            id,
+            sender:sender_id (name, avatar),
+            roster_entry:roster_entry_id (
+                shifts (
+                    role,
+                    events (name, date)
+                )
+            )
+        `)
+        .eq('receiver_id', userId)
+        .eq('status', 'Pending');
+
+    if (error) {
+        console.error('Error fetching swap requests:', error);
+        return [];
+    }
+    return data;
+};
+
+export const getOutgoingSwapRequests = async (userId: string): Promise<any[]> => {
+    const { data, error } = await supabase
+        .from('swap_requests')
+        .select(`
+            id,
+            status,
+            receiver:receiver_id (name, avatar),
+            roster_entry:roster_entry_id (
+                shifts (
+                    role,
+                    events (name, date)
+                )
+            )
+        `)
+        .eq('sender_id', userId);
+
+    if (error) {
+        console.error('Error fetching outgoing swap requests:', error);
+        return [];
+    }
+    return data;
+};
+
+export const respondToSwapRequest = async (requestId: string, status: 'Accepted' | 'Declined'): Promise<boolean> => {
+    const { data: request, error: fetchError } = await supabase
+        .from('swap_requests')
+        .select('*')
+        .eq('id', requestId)
+        .single();
+
+    if (fetchError || !request) return false;
+
+    if (status === 'Accepted') {
+        // Perform the transfer
+        const { error: updateError } = await supabase
+            .from('roster_entries')
+            .update({ user_id: request.receiver_id })
+            .eq('id', request.roster_entry_id);
+
+        if (updateError) {
+            console.error('Error transferring roster entry:', updateError);
+            return false;
+        }
+    }
+
+    const { error: statusError } = await supabase
+        .from('swap_requests')
+        .update({ status })
+        .eq('id', requestId);
+
+    return !statusError;
+};

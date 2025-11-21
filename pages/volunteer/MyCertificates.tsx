@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import Card from '../../components/ui/Card';
 import { DownloadIcon, FileTextIcon } from '../../components/Icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { getUserCompletedEvents } from '../../services/supabaseService';
 
 interface Certificate {
     id: string;
@@ -19,9 +20,19 @@ const MOCK_CERTIFICATES: Certificate[] = [
 
 const MyCertificates: React.FC = () => {
     const { user } = useAuth();
-    // Use mock data for now, but in a real app this would come from the backend
-    // Set to empty array to test "No certificate" state if needed
-    const [certificates] = useState<Certificate[]>(MOCK_CERTIFICATES);
+    const [certificates, setCertificates] = useState<Certificate[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    React.useEffect(() => {
+        const fetchCertificates = async () => {
+            if (user) {
+                const data = await getUserCompletedEvents(user.id);
+                setCertificates(data);
+            }
+            setLoading(false);
+        };
+        fetchCertificates();
+    }, [user]);
 
     const generateCertificate = (cert: Certificate) => {
         const doc = new jsPDF({
