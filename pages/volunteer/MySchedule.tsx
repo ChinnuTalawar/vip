@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../../components/ui/Card';
 import { useAuth } from '../../contexts/AuthContext';
-import { ClockIcon, CalendarIcon, MapPinIcon, UserGroupIcon, QrCodeIcon, ArrowsRightLeftIcon } from '../../components/Icons';
+import { ClockIcon, CalendarIcon, MapPinIcon, UserGroupIcon, QrCodeIcon, ArrowsRightLeftIcon, DownloadIcon } from '../../components/Icons';
 import { getUserSchedule, getEventShifts, updateRosterShift, cancelRosterEntry, getAllVolunteers, createSwapRequest, getPendingSwapRequests, respondToSwapRequest, getOutgoingSwapRequests } from '../../services/supabaseService';
 import QRCode from 'qrcode';
+import { generateCertificate } from '../../utils/certificateGenerator';
 
 const MySchedule: React.FC = () => {
     const { user } = useAuth();
@@ -266,8 +267,8 @@ END:VEVENT
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className={`px-3 py-1 rounded text-sm font-bold ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                req.status === 'Accepted' ? 'bg-green-100 text-green-800' :
-                                                    'bg-red-100 text-red-800'
+                                            req.status === 'Accepted' ? 'bg-green-100 text-green-800' :
+                                                'bg-red-100 text-red-800'
                                             }`}>
                                             {req.status}
                                         </span>
@@ -357,6 +358,7 @@ END:VEVENT
                                 <th className="px-4 py-3 rounded-l-lg">Event</th>
                                 <th className="px-4 py-3">Date</th>
                                 <th className="px-4 py-3 text-center">Hours</th>
+                                <th className="px-4 py-3 text-center">Certificate</th>
                                 <th className="px-4 py-3 rounded-r-lg text-right">Status</th>
                             </tr>
                         </thead>
@@ -365,7 +367,35 @@ END:VEVENT
                                 <tr key={shift.id} className="border-b dark:border-slate-700">
                                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{shift.eventName}</td>
                                     <td className="px-4 py-3">{new Date(shift.eventDate).toLocaleDateString()}</td>
-                                    <td className="px-4 py-3 text-center">4</td>
+                                    <td className="px-4 py-3 text-center">
+                                        {(() => {
+                                            const start = new Date(`1970-01-01T${shift.startTime}`);
+                                            const end = new Date(`1970-01-01T${shift.endTime}`);
+                                            return parseFloat((Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60))).toFixed(1));
+                                        })()}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <button
+                                            onClick={() => {
+                                                const start = new Date(`1970-01-01T${shift.startTime}`);
+                                                const end = new Date(`1970-01-01T${shift.endTime}`);
+                                                const hours = parseFloat((Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60))).toFixed(1));
+
+                                                generateCertificate({
+                                                    eventName: shift.eventName,
+                                                    date: shift.eventDate,
+                                                    role: shift.role,
+                                                    hours: hours,
+                                                    volunteerName: user?.name || user?.email || 'Volunteer',
+                                                    progress: 100 // Completed shifts are 100%
+                                                });
+                                            }}
+                                            className="inline-flex items-center justify-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                            title="Download Certificate"
+                                        >
+                                            <DownloadIcon className="w-5 h-5" />
+                                        </button>
+                                    </td>
                                     <td className="px-4 py-3 text-right">
                                         <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Verified</span>
                                     </td>
