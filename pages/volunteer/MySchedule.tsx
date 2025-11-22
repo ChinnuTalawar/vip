@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '../../components/ui/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import { ClockIcon, CalendarIcon, MapPinIcon, UserGroupIcon, QrCodeIcon, ArrowsRightLeftIcon, DownloadIcon } from '../../components/Icons';
-import { getUserSchedule, getEventShifts, updateRosterShift, cancelRosterEntry, getAllVolunteers, createSwapRequest, getPendingSwapRequests, respondToSwapRequest, getOutgoingSwapRequests } from '../../services/supabaseService';
+import { getUserSchedule, getEventShifts, updateRosterShift, cancelRosterEntry, getAllVolunteers, createSwapRequest, getPendingSwapRequests, respondToSwapRequest, getOutgoingSwapRequests, cancelSwapRequest } from '../../services/supabaseService';
 import QRCode from 'qrcode';
 import { generateCertificate } from '../../utils/certificateGenerator';
 
@@ -97,6 +97,18 @@ const MySchedule: React.FC = () => {
             fetchData(); // Refresh to show in outgoing
         } else {
             alert('Failed to send swap request.');
+        }
+    };
+
+    const handleCancelSwapRequest = async (requestId: string) => {
+        if (confirm('Are you sure you want to cancel this swap request?')) {
+            const success = await cancelSwapRequest(requestId);
+            if (success) {
+                alert('Swap request cancelled.');
+                fetchData();
+            } else {
+                alert('Failed to cancel swap request.');
+            }
         }
     };
 
@@ -259,6 +271,14 @@ const MySchedule: React.FC = () => {
                                             }`}>
                                             {req.status}
                                         </span>
+                                        {req.status === 'Pending' && (
+                                            <button
+                                                onClick={() => handleCancelSwapRequest(req.id)}
+                                                className="text-xs text-red-600 underline hover:text-red-800"
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
                                         {req.status === 'Declined' && (
                                             <button
                                                 onClick={() => handleShowSwap({

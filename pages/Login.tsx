@@ -12,7 +12,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white font-bold text-3xl mx-auto mb-6">
           V
         </div>
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">VolunTier AI</h1>
+        <h1 className="text-3xl font-bold text-slate-800 mb-2">Eventure</h1>
         <p className="text-slate-500 mb-8">Select a role to proceed to the MVP demo.</p>
 
         <div className="space-y-4">

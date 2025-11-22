@@ -22,7 +22,7 @@ const Welcome: React.FC = () => {
                 </div>
 
                 <h1 className="text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight">
-                    VolunTier AI
+                    Eventure
                 </h1>
                 <p className="text-blue-100 text-lg mb-12 font-light tracking-wide">
                     Connecting passion with purpose.

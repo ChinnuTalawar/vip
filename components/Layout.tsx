@@ -60,7 +60,7 @@ const Layout: React.FC<LayoutProps> = ({
                 <span className="text-xs text-indigo-200">Event Management</span>
               </div>
             </div>
-            <p className="text-xs text-indigo-200 mt-2 truncate">{user?.email}</p>
+            <p className="text-xs text-indigo-200 mt-2 truncate">{user?.user_metadata?.full_name || user?.email}</p>
           </div>
 
           {/* Main Navigation */}
@@ -169,7 +169,7 @@ const Layout: React.FC<LayoutProps> = ({
                 {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
               </button>
               <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
-                {user?.email?.charAt(0).toUpperCase()}
+                {(user?.user_metadata?.full_name || user?.email)?.charAt(0).toUpperCase()}
               </div>
             </div>
           </header>
@@ -197,7 +197,7 @@ const Layout: React.FC<LayoutProps> = ({
               <span className="text-xs text-indigo-200">Event Management</span>
             </div>
           </div>
-          <p className="text-xs text-indigo-200 mt-2 truncate">{user?.email}</p>
+          <p className="text-xs text-indigo-200 mt-2 truncate">{user?.user_metadata?.full_name || user?.email}</p>
         </div>
 
         {/* Main Navigation */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Welcome from './pages/Welcome';
 import VolunteerLogin from './pages/auth/VolunteerLogin';
@@ -27,11 +27,23 @@ import Settings from './pages/admin/Settings';
 import AllEvents from './pages/admin/AllEvents';
 
 const AppContent: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [roleLoading, setRoleLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+
+  const handleLogout = async () => {
+    const currentRole = userRole;
+    await signOut();
+    if (currentRole === UserRole.ADMIN) {
+      navigate('/login/admin');
+    } else {
+      navigate('/login/volunteer');
+    }
+  };
 
   // Check local storage for theme preference on mount
   useEffect(() => {
@@ -102,7 +114,7 @@ const AppContent: React.FC = () => {
         role={userRole || UserRole.VOLUNTEER}
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
-        onLogout={() => supabase.auth.signOut()}
+        onLogout={handleLogout}
         currentPath={location.pathname}
         onNavigate={(path) => window.location.hash = path}
       >

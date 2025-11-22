@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarIcon, SparklesIcon, UsersIcon, GridIcon, ListIcon } from '../../components/Icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { getEvents, joinEvent, subscribeToEvents } from '../../services/supabaseService';
+import { getCollegeEvents, joinEvent, subscribeToEvents } from '../../services/supabaseService';
 import { Event } from '../../types';
 
 const BrowseEvents: React.FC = () => {
@@ -13,7 +13,7 @@ const BrowseEvents: React.FC = () => {
 
     useEffect(() => {
         const fetchEvents = async () => {
-            const data = await getEvents();
+            const data = await getCollegeEvents();
             setEvents(data);
             setLoading(false);
         };
@@ -40,7 +40,7 @@ const BrowseEvents: React.FC = () => {
         if (result.success) {
             setToast({ message: `Success! Signed up for ${eventName}.`, visible: true, type: 'success' });
             // Refresh events to update counts
-            const data = await getEvents();
+            const data = await getCollegeEvents();
             setEvents(data);
         } else {
             setToast({ message: result.message || 'Failed to sign up.', visible: true, type: 'error' });
