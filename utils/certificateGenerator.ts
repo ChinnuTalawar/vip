@@ -6,10 +6,11 @@ export interface CertificateData {
     role: string;
     hours: number;
     volunteerName: string;
-    progress?: number; // Optional progress percentage (0-100)
+    progress?: number; // Percentage of completion or impact
 }
 
 export const generateCertificate = (data: CertificateData) => {
+    // Create PDF in landscape orientation, A4 size
     const doc = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -20,193 +21,110 @@ export const generateCertificate = (data: CertificateData) => {
     const pageHeight = 210;
     const centerX = pageWidth / 2;
 
-    // Background - Elegant gradient effect using rectangles
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    // --- Design Elements ---
 
-    // Decorative corner elements
-    const drawCornerDecoration = (x: number, y: number, flipX: boolean, flipY: boolean) => {
-        doc.setDrawColor(79, 70, 229); // indigo-600
-        doc.setLineWidth(0.5);
+    // 1. Professional Border
+    // Outer thin line
+    doc.setDrawColor(60, 60, 60); // Dark gray
+    doc.setLineWidth(0.5);
+    doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
 
-        const xMult = flipX ? -1 : 1;
-        const yMult = flipY ? -1 : 1;
-
-        // Corner lines
-        doc.line(x, y, x + (20 * xMult), y);
-        doc.line(x, y, x, y + (20 * yMult));
-        doc.line(x + (15 * xMult), y, x + (15 * xMult), y + (5 * yMult));
-        doc.line(x, y + (15 * yMult), x + (5 * xMult), y + (15 * yMult));
-    };
-
-    // Draw corner decorations
-    drawCornerDecoration(15, 15, false, false);
-    drawCornerDecoration(pageWidth - 15, 15, true, false);
-    drawCornerDecoration(15, pageHeight - 15, false, true);
-    drawCornerDecoration(pageWidth - 15, pageHeight - 15, true, true);
-
-    // Main border - double line effect
-    doc.setLineWidth(1.5);
-    doc.setDrawColor(79, 70, 229); // indigo-600
-    doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
-
-    doc.setLineWidth(0.3);
-    doc.setDrawColor(165, 180, 252); // indigo-300
+    // Inner thick line
+    doc.setDrawColor(40, 40, 40); // Darker gray
+    doc.setLineWidth(2);
     doc.rect(15, 15, pageWidth - 30, pageHeight - 30);
 
-    // Top decorative line
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(79, 70, 229);
-    doc.line(50, 35, pageWidth - 50, 35);
+    // 2. Header Section
+    // Logo placeholder or Organization Name
+    doc.setFont('times', 'bold');
+    doc.setFontSize(24);
+    doc.setTextColor(40, 40, 40);
+    doc.text('EVENTURE', centerX, 35, { align: 'center' });
 
-    // Header - Certificate Title
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(42);
-    doc.setTextColor(79, 70, 229); // indigo-600
-    doc.text('CERTIFICATE', centerX, 30, { align: 'center' });
-
-    doc.setFontSize(18);
-    doc.setTextColor(99, 102, 241); // indigo-500
-    doc.text('OF APPRECIATION', centerX, 38, { align: 'center' });
-
-    // Subtitle
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    doc.setTextColor(100, 116, 139); // slate-500
-    doc.text('This is to certify that', centerX, 55, { align: 'center' });
+    doc.setTextColor(100, 100, 100);
+    doc.text('COMMUNITY VOLUNTEER PROGRAM', centerX, 42, { align: 'center' });
 
-    // Volunteer Name - Emphasized
-    doc.setFont('times', 'bolditalic');
-    doc.setFontSize(32);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.text(data.volunteerName, centerX, 70, { align: 'center' });
-
-    // Underline for name
-    doc.setLineWidth(0.3);
-    doc.setDrawColor(79, 70, 229);
-    const nameWidth = doc.getTextWidth(data.volunteerName);
-    doc.line(centerX - nameWidth / 2 - 5, 72, centerX + nameWidth / 2 + 5, 72);
-
-    // Main content
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(13);
-    doc.setTextColor(51, 65, 85); // slate-700
-    doc.text('has successfully completed volunteer service as a', centerX, 85, { align: 'center' });
-
-    // Role - Highlighted
+    // Certificate Title
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(40);
+    doc.setTextColor(33, 150, 243); // Professional Blue
+    doc.text('CERTIFICATE', centerX, 65, { align: 'center' });
+
     doc.setFontSize(16);
-    doc.setTextColor(79, 70, 229);
-    doc.text(data.role, centerX, 95, { align: 'center' });
+    doc.setTextColor(60, 60, 60);
+    doc.text('OF APPRECIATION', centerX, 75, { align: 'center' });
 
-    // Event details
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(13);
-    doc.setTextColor(51, 65, 85);
+    // 3. Recipient Section
+    doc.setFont('times', 'italic');
+    doc.setFontSize(14);
+    doc.setTextColor(80, 80, 80);
+    doc.text('This certificate is proudly presented to', centerX, 95, { align: 'center' });
+
+    // Volunteer Name
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(28);
+    doc.setTextColor(0, 0, 0);
+    doc.text(data.volunteerName, centerX, 110, { align: 'center' });
+
+    // Underline name
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(centerX - 60, 115, centerX + 60, 115);
+
+    // 4. Details Section
+    doc.setFont('times', 'normal');
+    doc.setFontSize(14);
+    doc.setTextColor(60, 60, 60);
+
     const eventDate = new Date(data.date).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
     });
-    doc.text(`at the ${data.eventName}`, centerX, 105, { align: 'center' });
-    doc.text(`on ${eventDate}`, centerX, 113, { align: 'center' });
 
-    // Hours and Progress section - Box design
-    const boxY = 125;
-    const boxHeight = 25;
+    doc.text('In recognition of their outstanding contribution and dedication', centerX, 130, { align: 'center' });
+    doc.text(`as a ${data.role} at`, centerX, 138, { align: 'center' });
 
-    // Hours box
-    doc.setFillColor(249, 250, 251); // gray-50
-    doc.setDrawColor(226, 232, 240); // slate-200
-    doc.setLineWidth(0.5);
-    doc.roundedRect(60, boxY, 70, boxHeight, 3, 3, 'FD');
-
+    // Event Name
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(100, 116, 139);
-    doc.text('HOURS CONTRIBUTED', 95, boxY + 8, { align: 'center' });
+    doc.setFontSize(18);
+    doc.setTextColor(33, 150, 243); // Blue
+    doc.text(data.eventName, centerX, 148, { align: 'center' });
 
-    doc.setFontSize(20);
-    doc.setTextColor(79, 70, 229);
-    doc.text(`${data.hours}`, 95, boxY + 20, { align: 'center' });
+    // Stats (Hours & Progress)
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.setTextColor(80, 80, 80);
 
-    // Progress box (if provided)
+    let statsText = `Date: ${eventDate}  |  Hours Contributed: ${data.hours}`;
     if (data.progress !== undefined) {
-        doc.setFillColor(249, 250, 251);
-        doc.roundedRect(pageWidth - 130, boxY, 70, boxHeight, 3, 3, 'FD');
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(100, 116, 139);
-        doc.text('COMPLETION', pageWidth - 95, boxY + 8, { align: 'center' });
-
-        doc.setFontSize(20);
-        doc.setTextColor(34, 197, 94); // green-500
-        doc.text(`${data.progress}%`, pageWidth - 95, boxY + 20, { align: 'center' });
+        statsText += `  |  Completion: ${data.progress}%`;
     }
+    doc.text(statsText, centerX, 160, { align: 'center' });
 
-    // Bottom decorative line
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(79, 70, 229);
-    doc.line(50, 160, pageWidth - 50, 160);
+    // 5. Footer & Signature
+    const sigY = 180;
 
-    // Signature section
-    const sigY = 175;
-
-    // Left signature - Organization
-    doc.setFont('helvetica', 'normal');
+    // Left Signature
+    doc.line(60, sigY, 110, sigY); // Line
     doc.setFontSize(10);
-    doc.setTextColor(71, 85, 105);
+    doc.text('Program Director', 85, sigY + 5, { align: 'center' });
 
-    // Signature line
-    doc.setLineWidth(0.3);
-    doc.setDrawColor(148, 163, 184);
-    doc.line(50, sigY, 110, sigY);
+    // Right Signature
+    doc.line(pageWidth - 110, sigY, pageWidth - 60, sigY); // Line
+    doc.text('Event Coordinator', pageWidth - 85, sigY + 5, { align: 'center' });
 
-    // Signature placeholder (you can add an actual signature image here)
-    doc.setFont('times', 'italic');
-    doc.setFontSize(14);
-    doc.setTextColor(79, 70, 229);
-    doc.text('Eventure Team', 80, sigY - 3, { align: 'center' });
+    // Date Issued
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    const issueDate = new Date().toLocaleDateString();
+    doc.text(`Issued on: ${issueDate}`, centerX, 195, { align: 'center' });
+    doc.text(`Certificate ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()}`, centerX, 200, { align: 'center' });
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text('Authorized Signature', 80, sigY + 5, { align: 'center' });
-    doc.text('Volunteer Coordinator', 80, sigY + 10, { align: 'center' });
-
-    // Right signature - Date
-    doc.setLineWidth(0.3);
-    doc.line(pageWidth - 110, sigY, pageWidth - 50, sigY);
-
-    const issueDate = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(71, 85, 105);
-    doc.text(issueDate, pageWidth - 80, sigY - 3, { align: 'center' });
-
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text('Date of Issue', pageWidth - 80, sigY + 5, { align: 'center' });
-
-    // Footer message
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
-    doc.text('Thank you for your dedication and commitment to making a positive impact in our community.', centerX, pageHeight - 10, { align: 'center' });
-
-    // Certificate ID (bottom right corner)
-    const certId = `CERT-${Date.now().toString(36).toUpperCase()}`;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(148, 163, 184);
-    doc.text(`Certificate ID: ${certId}`, pageWidth - 20, pageHeight - 5, { align: 'right' });
-
-    // Save the PDF
-    const fileName = `${data.volunteerName.replace(/\s+/g, '_')}_${data.eventName.replace(/\s+/g, '_')}_Certificate.pdf`;
-    doc.save(fileName);
+    // Save PDF
+    const safeName = data.volunteerName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const safeEvent = data.eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    doc.save(`certificate_${safeName}_${safeEvent}.pdf`);
 };

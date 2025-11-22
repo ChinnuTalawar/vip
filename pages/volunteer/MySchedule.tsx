@@ -6,6 +6,7 @@ import { getUserSchedule, getEventShifts, updateRosterShift, cancelRosterEntry, 
 import QRCode from 'qrcode';
 import { generateCertificate } from '../../utils/certificateGenerator';
 
+
 const MySchedule: React.FC = () => {
     const { user } = useAuth();
     const [upcomingShifts, setUpcomingShifts] = useState<any[]>([]);
@@ -387,7 +388,7 @@ END:VEVENT
                                                     role: shift.role,
                                                     hours: hours,
                                                     volunteerName: user?.name || user?.email || 'Volunteer',
-                                                    progress: 100 // Completed shifts are 100%
+                                                    progress: 100
                                                 });
                                             }}
                                             className="inline-flex items-center justify-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"

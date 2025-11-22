@@ -302,44 +302,7 @@ export const deleteUserAccount = async (userId: string): Promise<boolean> => {
     return true;
 };
 
-export const getUserCompletedEvents = async (userId: string): Promise<any[]> => {
-    const { data, error } = await supabase
-        .from('roster_entries')
-        .select(`
-            id,
-            status,
-            shifts (
-                role,
-                start_time,
-                end_time,
-                events (
-                    name,
-                    date
-                )
-            )
-        `)
-        .eq('user_id', userId)
-        .eq('status', 'Completed');
 
-    if (error) {
-        console.error('Error fetching user completed events:', error);
-        return [];
-    }
-
-    return data.map((entry: any) => {
-        const start = new Date(`1970-01-01T${entry.shifts.start_time}`);
-        const end = new Date(`1970-01-01T${entry.shifts.end_time}`);
-        const hours = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60));
-
-        return {
-            id: entry.id,
-            eventName: entry.shifts.events.name,
-            date: entry.shifts.events.date,
-            role: entry.shifts.role,
-            hours: parseFloat(hours.toFixed(1))
-        };
-    });
-};
 
 export const joinEvent = async (userId: string, eventId: string): Promise<{ success: boolean, message?: string, qrCode?: string }> => {
     try {
@@ -410,7 +373,7 @@ export const getUserSchedule = async (userId: string): Promise<any[]> => {
             )
         `)
         .eq('user_id', userId)
-        .in('status', ['Confirmed', 'Pending', 'CheckIn']);
+        .in('status', ['Confirmed', 'Pending', 'CheckIn', 'Completed']);
 
     if (error) {
         console.error('Error fetching user schedule:', error);
@@ -431,6 +394,57 @@ export const getUserSchedule = async (userId: string): Promise<any[]> => {
         status: entry.status
     }));
 };
+
+export const getUserCompletedEvents = async (userId: string): Promise<any[]> => {
+    const { data, error } = await supabase
+        .from('roster_entries')
+        .select(`
+            id,
+            status,
+            shifts (
+                id,
+                role,
+                start_time,
+                end_time,
+                events (
+                    id,
+                    name,
+                    date,
+                    location,
+                    image_url
+                )
+            )
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'Completed');
+
+    if (error) {
+        console.error('Error fetching completed events:', error);
+        return [];
+    }
+
+    return data.map((entry: any) => {
+        const start = new Date(`1970-01-01T${entry.shifts.start_time}`);
+        const end = new Date(`1970-01-01T${entry.shifts.end_time}`);
+        const hours = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60));
+
+        return {
+            id: entry.id,
+            eventId: entry.shifts.events.id,
+            eventName: entry.shifts.events.name,
+            eventDate: entry.shifts.events.date,
+            eventLocation: entry.shifts.events.location,
+            eventImage: entry.shifts.events.image_url,
+            role: entry.shifts.role,
+            shiftId: entry.shifts.id,
+            startTime: entry.shifts.start_time,
+            endTime: entry.shifts.end_time,
+            hours: parseFloat(hours.toFixed(1)),
+            status: entry.status
+        };
+    });
+};
+
 
 export const getEventShifts = async (eventId: string): Promise<any[]> => {
     const { data, error } = await supabase
@@ -585,76 +599,5 @@ export const respondToSwapRequest = async (requestId: string, status: 'Accepted'
         .eq('id', requestId);
 
     return !statusError;
-};
-
-/**
- * Get all events for a user (both upcoming and completed)
- * This includes events with status: Confirmed, Pending, CheckIn, and Completed
- * Perfect for "My Events" section to show complete event history
- */
-export const getUserAllEvents = async (userId: string): Promise<any[]> => {
-    const { data, error } = await supabase
-        .from('roster_entries')
-        .select(`
-            id,
-            status,
-            created_at,
-            shifts (
-                id,
-                role,
-                start_time,
-                end_time,
-                events (
-                    id,
-                    name,
-                    date,
-                    location,
-                    description,
-                    image_url,
-                    category
-                )
-            )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Error fetching user all events:', error);
-        return [];
-    }
-
-    return data.map((entry: any) => {
-        // Calculate hours from shift times
-        const start = new Date(`1970-01-01T${entry.shifts.start_time}`);
-        const end = new Date(`1970-01-01T${entry.shifts.end_time}`);
-        const hours = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60 * 60));
-
-        // Determine if event is upcoming or past
-        const eventDate = new Date(entry.shifts.events.date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const isUpcoming = eventDate >= today;
-
-        return {
-            id: entry.id,
-            eventId: entry.shifts.events.id,
-            eventName: entry.shifts.events.name,
-            eventDate: entry.shifts.events.date,
-            eventLocation: entry.shifts.events.location,
-            eventDescription: entry.shifts.events.description,
-            eventImage: entry.shifts.events.image_url,
-            eventCategory: entry.shifts.events.category,
-            role: entry.shifts.role,
-            shiftId: entry.shifts.id,
-            startTime: entry.shifts.start_time,
-            endTime: entry.shifts.end_time,
-            hours: parseFloat(hours.toFixed(1)),
-            status: entry.status,
-            isUpcoming: isUpcoming,
-            isPast: !isUpcoming,
-            isCompleted: entry.status === 'Completed',
-            joinedAt: entry.created_at
-        };
-    });
 };
 
