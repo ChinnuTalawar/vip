@@ -128,3 +128,33 @@ export const generateCertificate = (data: CertificateData) => {
     const safeEvent = data.eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     doc.save(`certificate_${safeName}_${safeEvent}.pdf`);
 };
+
+export const generateEmptyCertificate = () => {
+    const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+    });
+
+    const pageWidth = 297;
+    const pageHeight = 210;
+    const centerX = pageWidth / 2;
+    const centerY = pageHeight / 2;
+
+    // Border
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(1);
+    doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+
+    // Big Text
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(40);
+    doc.setTextColor(200, 50, 50); // Red color
+    doc.text('NO CERTIFICATE GENERATED', centerX, centerY, { align: 'center' });
+
+    doc.setFontSize(14);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Please complete an event to earn a certificate.', centerX, centerY + 20, { align: 'center' });
+
+    doc.save('no_certificate.pdf');
+};

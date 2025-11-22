@@ -1,17 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { ChartIcon, ClockIcon, CalendarIcon, TrophyIcon } from '../../components/Icons';
+import { ChartIcon, ClockIcon, CalendarIcon, TrophyIcon, CheckCircleIcon } from '../../components/Icons';
 import Card from '../../components/ui/Card';
+import { useAuth } from '../../contexts/AuthContext';
+import { getVolunteerStats } from '../../services/supabaseService';
 
 const Statistics: React.FC = () => {
-    // Mock Data
-    const summaryData = {
-        totalEvents: 12,
-        totalHours: 48,
-        completionRate: 92, // Percentage
-        streak: 5 // Current streak in days or events
+    const { user } = useAuth();
+    const [stats, setStats] = useState({
+        eventsJoined: 0,
+        eventsCompleted: 0,
+        hoursWorked: 0,
+        certificatesGained: 0
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (user) {
+            fetchStats();
+        }
+    }, [user]);
+
+    const fetchStats = async () => {
+        if (!user) return;
+        const data = await getVolunteerStats(user.id);
+        setStats(data);
+        setLoading(false);
     };
 
+    // Mock Data for Charts
     const monthlyData = [
         { name: 'Jan', hours: 4 },
         { name: 'Feb', hours: 8 },
@@ -34,6 +51,14 @@ const Statistics: React.FC = () => {
         { name: 'Week 4', events: 3 },
     ];
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -50,7 +75,7 @@ const Statistics: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-slate-500 dark:text-slate-400">Events Joined</p>
-                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{summaryData.totalEvents}</h3>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.eventsJoined}</h3>
                         </div>
                     </div>
                 </Card>
@@ -62,7 +87,7 @@ const Statistics: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-sm text-slate-500 dark:text-slate-400">Hours Worked</p>
-                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{summaryData.totalHours}</h3>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.hoursWorked}</h3>
                         </div>
                     </div>
                 </Card>
@@ -70,23 +95,23 @@ const Statistics: React.FC = () => {
                 <Card className="border-l-4 border-l-emerald-500">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-full text-emerald-600 dark:text-emerald-400">
-                            <TrophyIcon className="w-6 h-6" />
+                            <CheckCircleIcon className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Completion Rate</p>
-                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{summaryData.completionRate}%</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Events Completed</p>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.eventsCompleted}</h3>
                         </div>
                     </div>
                 </Card>
 
-                <Card className="border-l-4 border-l-amber-500">
+                <Card className="border-l-4 border-l-purple-500">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-600 dark:text-amber-400">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400">
+                            <TrophyIcon className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Current Streak</p>
-                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{summaryData.streak} Events</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Certificates</p>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{stats.certificatesGained}</h3>
                         </div>
                     </div>
                 </Card>

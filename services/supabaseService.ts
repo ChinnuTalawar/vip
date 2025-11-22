@@ -920,3 +920,99 @@ export const getCollegeEvents = async (): Promise<Event[]> => {
     }));
 };
 
+export const getVolunteerStats = async (userId: string) => {
+    const { data: entries, error } = await supabase
+        .from('roster_entries')
+        .select(`
+            status,
+            created_at,
+            shifts (
+                start_time,
+                end_time,
+                events (
+                    date
+                )
+            )
+        `)
+        .eq('user_id', userId);
+
+    if (error) {
+        console.error('Error fetching volunteer stats:', error);
+        return {
+            eventsJoined: 0,
+            eventsCompleted: 0,
+            hoursWorked: 0,
+            certificatesGained: 0,
+            monthlyHours: [],
+            statusDistribution: []
+        };
+    }
+
+    let eventsJoined = 0;
+    let eventsCompleted = 0;
+    let hoursWorked = 0;
+    const monthlyHoursMap = new Map<string, number>();
+    const statusCounts = new Map<string, number>();
+
+    // Initialize last 6 months for chart
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        monthlyHoursMap.set(months[d.getMonth()], 0);
+    }
+
+    entries.forEach((entry: any) => {
+        eventsJoined++;
+
+        // Status Distribution
+        const status = entry.status || 'Unknown';
+        statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+
+        if (entry.status === 'Completed') {
+            eventsCompleted++;
+            // Calculate hours
+            if (entry.shifts) {
+                const start = parseInt(entry.shifts.start_time.split(':')[0]);
+                const end = parseInt(entry.shifts.end_time.split(':')[0]);
+                const duration = Math.max(0, end - start);
+                hoursWorked += duration;
+
+                // Monthly Hours
+                if (entry.shifts.events?.date) {
+                    const date = new Date(entry.shifts.events.date);
+                    const monthName = months[date.getMonth()];
+                    if (monthlyHoursMap.has(monthName)) {
+                        monthlyHoursMap.set(monthName, (monthlyHoursMap.get(monthName) || 0) + duration);
+                    }
+                }
+            }
+        }
+    });
+
+    const monthlyHours = Array.from(monthlyHoursMap.entries()).map(([name, hours]) => ({ name, hours }));
+
+    const statusColors: Record<string, string> = {
+        'Completed': '#10b981', // emerald-500
+        'Confirmed': '#3b82f6', // blue-500
+        'Pending': '#f59e0b',   // amber-500
+        'Cancelled': '#ef4444', // red-500
+        'No Show': '#64748b'    // slate-500
+    };
+
+    const statusDistribution = Array.from(statusCounts.entries()).map(([name, value]) => ({
+        name,
+        value,
+        color: statusColors[name] || '#cbd5e1'
+    }));
+
+    return {
+        eventsJoined,
+        eventsCompleted,
+        hoursWorked,
+        certificatesGained: eventsCompleted,
+        monthlyHours,
+        statusDistribution
+    };
+};
+

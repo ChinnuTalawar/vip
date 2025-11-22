@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getUserCompletedEvents } from '../../services/supabaseService';
-import { generateCertificate } from '../../utils/certificateGenerator';
+import { generateCertificate, generateEmptyCertificate } from '../../utils/certificateGenerator';
 import { FileTextIcon, DownloadIcon, CalendarIcon, ClockIcon, TrophyIcon } from '../../components/Icons';
 import Card from '../../components/ui/Card';
 
@@ -64,9 +64,16 @@ const MyCertificates: React.FC = () => {
                         <FileTextIcon className="w-8 h-8 text-indigo-400" />
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No certificates to display</h3>
-                    <p className="text-slate-500 dark:text-slate-400 max-w-md">
+                    <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">
                         Complete volunteer events to earn certificates. Once your attendance is verified and the event is completed, your certificates will appear here.
                     </p>
+                    <button
+                        onClick={generateEmptyCertificate}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium text-sm"
+                    >
+                        <DownloadIcon className="w-4 h-4" />
+                        Download Certificate
+                    </button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

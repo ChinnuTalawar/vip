@@ -10,6 +10,7 @@ import Dashboard from './pages/admin/Dashboard';
 import EventManager from './pages/admin/EventManager';
 import Roster from './pages/admin/Roster';
 import CollegeEvents from './pages/admin/CollegeEvents';
+import VolunteerDashboard from './pages/volunteer/VolunteerDashboard';
 import BrowseEvents from './pages/volunteer/BrowseEvents';
 import MySchedule from './pages/volunteer/MySchedule';
 import MyCertificates from './pages/volunteer/MyCertificates';
@@ -133,7 +134,7 @@ const AppContent: React.FC = () => {
             </>
           ) : (
             <>
-              <Route path="/volunteer" element={<BrowseEvents />} />
+              <Route path="/volunteer" element={<VolunteerDashboard />} />
               <Route path="/volunteer/browse" element={<BrowseEvents />} />
               <Route path="/volunteer/recommended" element={<Recommended />} />
               <Route path="/volunteer/schedule" element={<MySchedule />} />

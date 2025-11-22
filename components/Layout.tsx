@@ -212,7 +212,7 @@ const Layout: React.FC<LayoutProps> = ({
             />
             <NavItem
               icon={<SearchIcon />}
-              label="Browse Events"
+              label="College Events"
               active={currentPath === '/volunteer/browse'}
               onClick={() => onNavigate('/volunteer/browse')}
               admin
