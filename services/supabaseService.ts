@@ -604,3 +604,16 @@ export const respondToSwapRequest = async (requestId: string, status: 'Accepted'
     return !statusError;
 };
 
+export const subscribeToEvents = (onUpdate: () => void) => {
+    const subscription = supabase
+        .channel('events_channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+            onUpdate();
+        })
+        .subscribe();
+
+    return () => {
+        supabase.removeChannel(subscription);
+    };
+};
+

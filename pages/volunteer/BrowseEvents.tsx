@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarIcon, SparklesIcon, UsersIcon, GridIcon, ListIcon } from '../../components/Icons';
 import { useAuth } from '../../contexts/AuthContext';
-import { getEvents, joinEvent } from '../../services/supabaseService';
+import { getEvents, joinEvent, subscribeToEvents } from '../../services/supabaseService';
 import { Event } from '../../types';
 
 const BrowseEvents: React.FC = () => {
@@ -18,6 +18,14 @@ const BrowseEvents: React.FC = () => {
             setLoading(false);
         };
         fetchEvents();
+
+        const unsubscribe = subscribeToEvents(() => {
+            fetchEvents();
+        });
+
+        return () => {
+            unsubscribe();
+        };
     }, []);
 
     const handleSignUp = async (eventId: string, eventName: string) => {
