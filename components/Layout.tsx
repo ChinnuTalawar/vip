@@ -81,6 +81,13 @@ const Layout: React.FC<LayoutProps> = ({
                 admin
               />
               <NavItem
+                icon={<BriefcaseIcon />}
+                label="College Events"
+                active={currentPath === '/admin/college-events'}
+                onClick={() => onNavigate('/admin/college-events')}
+                admin
+              />
+              <NavItem
                 icon={<PlusIcon />}
                 label="Create Event"
                 active={currentPath === '/admin/create'}

@@ -117,49 +117,35 @@ const MySchedule: React.FC = () => {
         }
     };
 
-    const handleDownloadCalendar = () => {
+    const handleSyncToGoogleCalendar = () => {
         if (upcomingShifts.length === 0) {
             alert('No upcoming shifts to sync.');
             return;
         }
 
-        let icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Voluntier//NONSGML v1.0//EN
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-`;
-
+        // Add all shifts to Google Calendar
         upcomingShifts.forEach(shift => {
             const startDateTime = new Date(`${shift.eventDate}T${shift.startTime}`);
             const endDateTime = new Date(`${shift.eventDate}T${shift.endTime}`);
 
-            const formatDate = (date: Date) => {
-                return date.toISOString().replace(/-|:|\.\d\d\d/g, "");
+            // Format dates for Google Calendar (YYYYMMDDTHHMMSSZ)
+            const formatGoogleDate = (date: Date) => {
+                return date.toISOString().replace(/-|:|\.\d{3}/g, '');
             };
 
-            icsContent += `BEGIN:VEVENT
-UID:${shift.id}@voluntier.com
-DTSTAMP:${formatDate(new Date())}
-DTSTART:${formatDate(startDateTime)}
-DTEND:${formatDate(endDateTime)}
-SUMMARY:Volunteer Shift: ${shift.eventName}
-DESCRIPTION:Role: ${shift.role}
-LOCATION:${shift.eventLocation}
-STATUS:CONFIRMED
-END:VEVENT
-`;
+            // Build Google Calendar URL
+            const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
+            googleCalendarUrl.searchParams.append('action', 'TEMPLATE');
+            googleCalendarUrl.searchParams.append('text', `Volunteer: ${shift.eventName}`);
+            googleCalendarUrl.searchParams.append('dates', `${formatGoogleDate(startDateTime)}/${formatGoogleDate(endDateTime)}`);
+            googleCalendarUrl.searchParams.append('details', `Role: ${shift.role}\nStatus: ${shift.status}\n\nThank you for volunteering!`);
+            googleCalendarUrl.searchParams.append('location', shift.eventLocation);
+            googleCalendarUrl.searchParams.append('sf', 'true');
+            googleCalendarUrl.searchParams.append('output', 'xml');
+
+            // Open in new tab
+            window.open(googleCalendarUrl.toString(), '_blank');
         });
-
-        icsContent += 'END:VCALENDAR';
-
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.setAttribute('download', 'volunteer_schedule.ics');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     };
 
     if (loading) return <div className="p-8 text-center">Loading schedule...</div>;
@@ -434,10 +420,14 @@ END:VEVENT
                     <h3 className="font-bold text-lg mb-2">Sync to Calendar</h3>
                     <p className="text-blue-100 text-sm mb-4">Never miss a shift. Add your upcoming volunteer schedule to your personal calendar.</p>
                     <button
-                        onClick={handleDownloadCalendar}
-                        className="w-full py-2 bg-white text-indigo-600 font-bold rounded-lg hover:bg-slate-100 transition-colors"
+                        onClick={handleSyncToGoogleCalendar}
+                        className="w-full py-2.5 bg-white text-indigo-600 font-bold rounded-lg hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
                     >
-                        Download .iCal
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19.5 3.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2v14H3v3c0 1.66 1.34 3 3 3h12c1.66 0 3-1.34 3-3V2l-1.5 1.5zM15 20H6c-.55 0-1-.45-1-1v-1h10v2zm4-1c0 .55-.45 1-1 1s-1-.45-1-1v-3H8V5h11v14z" />
+                            <path d="M9 7h6v2H9zm0 3h6v2H9z" />
+                        </svg>
+                        Add to Google Calendar
                     </button>
                 </div>
             </div>

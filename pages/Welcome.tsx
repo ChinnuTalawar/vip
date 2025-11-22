@@ -58,7 +58,7 @@ const Welcome: React.FC = () => {
                 </div>
 
                 <div className="mt-12 text-xs text-white/30 font-mono">
-                    v0.1.0 MVP • Powered by Gemini AI
+                    VIP
                 </div>
             </div>
 

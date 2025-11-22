@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { Event, User, RosterEntry, DashboardStats, Shift } from '../types';
+import { Event, User, RosterEntry, DashboardStats, Shift, CollegeInfo } from '../types';
 
 // Helper function to get Supabase storage public URL
 export const getStorageUrl = (fileName: string): string => {
@@ -680,5 +680,119 @@ export const subscribeToEvents = (onUpdate: () => void) => {
     return () => {
         supabase.removeChannel(subscription);
     };
+};
+
+// College Info Functions
+export const createCollegeInfo = async (collegeData: Omit<CollegeInfo, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const { data, error } = await supabase
+        .from('college_info')
+        .insert({
+            id: `college_${Date.now()}`,
+            college_name: collegeData.collegeName,
+            college_address: collegeData.collegeAddress,
+            college_city: collegeData.collegeCity,
+            college_state: collegeData.collegeState,
+            college_pincode: collegeData.collegePincode,
+            college_phone: collegeData.collegePhone,
+            college_email: collegeData.collegeEmail,
+            college_website: collegeData.collegeWebsite,
+            contact_person_name: collegeData.contactPersonName,
+            contact_person_designation: collegeData.contactPersonDesignation,
+            contact_person_phone: collegeData.contactPersonPhone,
+            contact_person_email: collegeData.contactPersonEmail
+        })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const getAllColleges = async (): Promise<CollegeInfo[]> => {
+    const { data, error } = await supabase
+        .from('college_info')
+        .select('*')
+        .order('college_name', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching colleges:', error);
+        return [];
+    }
+
+    return data.map((college: any) => ({
+        id: college.id,
+        collegeName: college.college_name,
+        collegeAddress: college.college_address,
+        collegeCity: college.college_city,
+        collegeState: college.college_state,
+        collegePincode: college.college_pincode,
+        collegePhone: college.college_phone,
+        collegeEmail: college.college_email,
+        collegeWebsite: college.college_website,
+        contactPersonName: college.contact_person_name,
+        contactPersonDesignation: college.contact_person_designation,
+        contactPersonPhone: college.contact_person_phone,
+        contactPersonEmail: college.contact_person_email,
+        createdAt: college.created_at,
+        updatedAt: college.updated_at
+    }));
+};
+
+export const getCollegeById = async (id: string): Promise<CollegeInfo | null> => {
+    const { data, error } = await supabase
+        .from('college_info')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) return null;
+
+    return {
+        id: data.id,
+        collegeName: data.college_name,
+        collegeAddress: data.college_address,
+        collegeCity: data.college_city,
+        collegeState: data.college_state,
+        collegePincode: data.college_pincode,
+        collegePhone: data.college_phone,
+        collegeEmail: data.college_email,
+        collegeWebsite: data.college_website,
+        contactPersonName: data.contact_person_name,
+        contactPersonDesignation: data.contact_person_designation,
+        contactPersonPhone: data.contact_person_phone,
+        contactPersonEmail: data.contact_person_email,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+    };
+};
+
+export const getCollegeEvents = async (): Promise<Event[]> => {
+    const { data, error } = await supabase
+        .from('events')
+        .select(`
+            *,
+            shifts (*),
+            college_info (*)
+        `)
+        .not('college_id', 'is', null);
+
+    if (error) {
+        console.error('Error fetching college events:', error);
+        return [];
+    }
+
+    return data.map((event: any) => ({
+        ...event,
+        imageUrl: event.image_url,
+        totalSlots: event.shifts?.reduce((acc: number, s: any) => acc + s.required_count, 0) || 0,
+        volunteers: event.shifts?.reduce((acc: number, s: any) => acc + s.filled_count, 0) || 0,
+        shifts: event.shifts?.length || 0,
+        collegeInfo: event.college_info ? {
+            id: event.college_info.id,
+            collegeName: event.college_info.college_name,
+            collegeCity: event.college_info.college_city,
+            collegeState: event.college_info.college_state
+        } : null
+    }));
 };
 

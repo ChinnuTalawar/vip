@@ -9,6 +9,7 @@ import AdminSignUp from './pages/auth/AdminSignUp';
 import Dashboard from './pages/admin/Dashboard';
 import EventManager from './pages/admin/EventManager';
 import Roster from './pages/admin/Roster';
+import CollegeEvents from './pages/admin/CollegeEvents';
 import BrowseEvents from './pages/volunteer/BrowseEvents';
 import MySchedule from './pages/volunteer/MySchedule';
 import MyCertificates from './pages/volunteer/MyCertificates';
@@ -110,6 +111,7 @@ const AppContent: React.FC = () => {
             <>
               <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/events" element={<AllEvents />} />
+              <Route path="/admin/college-events" element={<CollegeEvents />} />
               <Route path="/admin/create" element={<EventManager />} />
               <Route path="/admin/reports" element={<Reports />} />
               <Route path="/admin/insights" element={<AttendeeInsights />} />

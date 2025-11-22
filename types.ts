@@ -66,3 +66,21 @@ export interface RosterEntry {
   status: 'Confirmed' | 'Pending' | 'CheckIn' | 'Completed';
   avatar: string;
 }
+
+export interface CollegeInfo {
+  id: string;
+  collegeName: string;
+  collegeAddress: string;
+  collegeCity: string;
+  collegeState: string;
+  collegePincode: string;
+  collegePhone?: string;
+  collegeEmail?: string;
+  collegeWebsite?: string;
+  contactPersonName: string;
+  contactPersonDesignation?: string;
+  contactPersonPhone: string;
+  contactPersonEmail: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
