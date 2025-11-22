@@ -19,6 +19,7 @@ import {
   SparklesIcon
 } from './Icons';
 import { useAuth } from '../contexts/AuthContext';
+import UniversalSearch from './UniversalSearch';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -150,6 +151,9 @@ const Layout: React.FC<LayoutProps> = ({
             <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize">
               {currentPath.split('/').pop()?.replace('-', ' ') || 'Dashboard'}
             </h2>
+            <div className="flex items-center gap-4 flex-1 max-w-2xl mx-8">
+              <UniversalSearch onNavigate={onNavigate} />
+            </div>
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleDarkMode}
@@ -269,6 +273,9 @@ const Layout: React.FC<LayoutProps> = ({
           <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize">
             {currentPath.split('/').pop()?.replace('-', ' ') || 'Volunteer'}
           </h2>
+          <div className="flex items-center gap-4 flex-1 max-w-2xl mx-8">
+            <UniversalSearch onNavigate={onNavigate} />
+          </div>
           <div className="flex items-center gap-4">
             <button
               onClick={toggleDarkMode}
@@ -288,6 +295,7 @@ const Layout: React.FC<LayoutProps> = ({
     </div>
   );
 };
+
 
 interface NavItemProps {
   icon: React.ReactNode;
