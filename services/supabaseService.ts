@@ -333,9 +333,12 @@ export const joinEvent = async (userId: string, eventId: string): Promise<{ succ
 
         // 3. Join (Insert roster entry)
         // We use the ID as the unique QR code identifier.
+        const newRosterId = `r_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
         const { data, error } = await supabase
             .from('roster_entries')
             .insert({
+                id: newRosterId,
                 user_id: userId,
                 shift_id: shiftId,
                 status: 'Confirmed' // Auto-confirm for now

@@ -1,24 +1,18 @@
 -- 006_certificate_seed_data.sql
 
--- Add a past event
-INSERT INTO events (id, name, date, location, description, image_url, category) VALUES
-('e_past_1', 'Annual Charity Gala', '2024-12-10', 'Grand Hotel Ballroom', 'Our biggest fundraising event of the year. Volunteers needed for setup, guest assistance, and cleanup.', 'https://picsum.photos/800/400?random=10', 'Fundraising'),
-('e_past_2', 'Winter Coat Drive', '2025-01-15', 'Community Center', 'Collecting and distributing warm coats to those in need.', 'https://picsum.photos/800/400?random=11', 'Community');
+-- Assign existing past events (from 002_seed_data.sql) to the main volunteer 'u1' as Completed.
+-- We use the existing shifts s1, s2, s3, s5 which correspond to:
+-- s1: City Park Cleanup (Team Leader)
+-- s2: City Park Cleanup (General Cleanup)
+-- s3: Food Bank Sort-a-thon (Sorter)
+-- s5: Tech Literacy Workshop (Instructor)
 
--- Add shifts for past events
-INSERT INTO shifts (id, event_id, role, start_time, end_time, required_count, filled_count) VALUES
-('s_past_1', 'e_past_1', 'Event Assistant', '17:00', '23:00', 10, 10),
-('s_past_2', 'e_past_2', 'Distributor', '09:00', '15:00', 5, 5);
+-- Note: We are NOT creating new events. We are using the existing events managed by the admin.
 
--- Add completed roster entries for the main demo user (assuming user ID is the one currently logged in, but we'll use 'u1' and 'u_john' as examples)
--- Note: In a real scenario, you'd replace 'u1' with your actual user ID from the auth.users table if testing with a specific login.
--- Here we insert for 'u1' (Alex Volunteer) defined in 002_seed_data.sql
 INSERT INTO roster_entries (id, user_id, shift_id, status) VALUES
-('r_cert_1', 'u1', 's_past_1', 'Completed'),
-('r_cert_2', 'u1', 's_past_2', 'Completed'),
-('r_cert_3', 'u1', 's1', 'Completed'); -- Also completed the City Park Cleanup
+('r_cert_1', 'u1', 's2', 'Completed'), -- City Park Cleanup (General Cleanup)
+('r_cert_2', 'u1', 's3', 'Completed'), -- Food Bank Sort-a-thon (Sorter)
+('r_cert_3', 'u1', 's5', 'Completed'); -- Tech Literacy Workshop (Instructor)
 
--- Add some for other users to populate the system
-INSERT INTO roster_entries (id, user_id, shift_id, status) VALUES
-('r_cert_4', 'u_john', 's_past_1', 'Completed'),
-('r_cert_5', 'u_jane', 's_past_1', 'Completed');
+-- If you are logged in as a different user than 'u1' (alex@example.com), 
+-- you will need to update the 'user_id' in these rows to match your actual User ID.
