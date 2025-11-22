@@ -39,6 +39,9 @@ export interface Event {
   imageUrl: string;
   shifts: Shift[];
   category: 'Environment' | 'Education' | 'Community' | 'Health';
+  status: 'Published' | 'Draft' | 'Completed' | 'Ongoing';
+  volunteers?: number;
+  totalSlots?: number;
 }
 
 export interface DashboardStats {

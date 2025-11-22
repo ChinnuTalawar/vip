@@ -32,7 +32,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </div>
 
         <p className="mt-8 text-xs text-slate-400">
-          Powered by Gemini AI • v0.1.0 MVP
+          VIP
         </p>
       </div>
     </div>

@@ -1,13 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarIcon, UsersIcon } from '../../components/Icons';
-import { useEvents } from '../../contexts/EventsContext';
+import { CalendarIcon, UsersIcon, TrashIcon } from '../../components/Icons';
+import { getEvents, deleteEvent } from '../../services/supabaseService';
+import { Event } from '../../types';
 
 const AllEvents: React.FC = () => {
     const navigate = useNavigate();
-    const { events } = useEvents();
+    const [events, setEvents] = useState<Event[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchEvents();
+
+        const handleClickOutside = () => setActiveMenuId(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    const fetchEvents = async () => {
+        const data = await getEvents();
+        setEvents(data);
+        setLoading(false);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+            try {
+                await deleteEvent(id);
+                setEvents(prev => prev.filter(e => e.id !== id));
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                alert('Failed to delete event.');
+            }
+        }
+    };
 
     const filteredEvents = events.filter(event => {
         const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,6 +65,14 @@ const AllEvents: React.FC = () => {
     const getStatusLabel = (status: string) => {
         return status === 'Published' ? 'Upcoming' : status;
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -83,51 +120,22 @@ const AllEvents: React.FC = () => {
 
             {/* Status Filter Tabs */}
             <div className="flex gap-2 flex-wrap">
-                <button
-                    onClick={() => setStatusFilter('All')}
-                    className={`px-4 py-2 rounded-full font-medium text-sm transition-colors ${statusFilter === 'All'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
-                        }`}
-                >
-                    All ({allCount})
-                </button>
-                <button
-                    onClick={() => setStatusFilter('Published')}
-                    className={`px-4 py-2 rounded-full font-medium text-sm transition-colors ${statusFilter === 'Published'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
-                        }`}
-                >
-                    Published ({publishedCount})
-                </button>
-                <button
-                    onClick={() => setStatusFilter('Ongoing')}
-                    className={`px-4 py-2 rounded-full font-medium text-sm transition-colors ${statusFilter === 'Ongoing'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
-                        }`}
-                >
-                    Ongoing ({ongoingCount})
-                </button>
-                <button
-                    onClick={() => setStatusFilter('Completed')}
-                    className={`px-4 py-2 rounded-full font-medium text-sm transition-colors ${statusFilter === 'Completed'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
-                        }`}
-                >
-                    Completed ({completedCount})
-                </button>
-                <button
-                    onClick={() => setStatusFilter('Draft')}
-                    className={`px-4 py-2 rounded-full font-medium text-sm transition-colors ${statusFilter === 'Draft'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
-                        }`}
-                >
-                    Draft ({draftCount})
-                </button>
+                {['All', 'Published', 'Ongoing', 'Completed', 'Draft'].map(status => (
+                    <button
+                        key={status}
+                        onClick={() => setStatusFilter(status)}
+                        className={`px-4 py-2 rounded-full font-medium text-sm transition-colors ${statusFilter === status
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            }`}
+                    >
+                        {status === 'All' ? `All (${allCount})` :
+                            status === 'Published' ? `Published (${publishedCount})` :
+                                status === 'Ongoing' ? `Ongoing (${ongoingCount})` :
+                                    status === 'Completed' ? `Completed (${completedCount})` :
+                                        `Draft (${draftCount})`}
+                    </button>
+                ))}
             </div>
 
             {/* Events Grid */}
@@ -135,7 +143,7 @@ const AllEvents: React.FC = () => {
                 {filteredEvents.map((event) => (
                     <div
                         key={event.id}
-                        className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-slate-900/5 dark:hover:shadow-black/20 transition-all duration-300"
+                        className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:shadow-slate-900/5 dark:hover:shadow-black/20 transition-all duration-300 relative group"
                     >
                         {/* Event Image */}
                         <div className="relative h-56 bg-slate-200 dark:bg-slate-700 overflow-hidden">
@@ -155,11 +163,48 @@ const AllEvents: React.FC = () => {
                             </div>
 
                             {/* Three dots menu */}
-                            <button className="absolute top-4 right-4 p-2.5 bg-white/90 dark:bg-slate-800/90 rounded-xl hover:bg-white dark:hover:bg-slate-800 transition-colors backdrop-blur-sm">
-                                <svg className="w-5 h-5 text-slate-700 dark:text-slate-300" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                                </svg>
-                            </button>
+                            <div className="absolute top-4 right-4">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuId(activeMenuId === event.id ? null : event.id);
+                                    }}
+                                    className="p-2.5 bg-white/90 dark:bg-slate-800/90 rounded-xl hover:bg-white dark:hover:bg-slate-800 transition-colors backdrop-blur-sm shadow-sm"
+                                >
+                                    <svg className="w-5 h-5 text-slate-700 dark:text-slate-300" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                                    </svg>
+                                </button>
+
+                                {activeMenuId === event.id && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-20 animate-in fade-in zoom-in-95 duration-100">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/admin/create?eventId=${event.id}`);
+                                                setActiveMenuId(null);
+                                            }}
+                                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 transition-colors"
+                                        >
+                                            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                            Edit Event
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(event.id);
+                                                setActiveMenuId(null);
+                                            }}
+                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors"
+                                        >
+                                            <TrashIcon className="w-4 h-4" />
+                                            Delete Event
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Event Details */}
@@ -188,18 +233,6 @@ const AllEvents: React.FC = () => {
                                         <span className="line-clamp-1">{event.location}</span>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        alert('Sent reminder');
-                                    }}
-                                    className="p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
-                                    title="Send Reminder"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                    </svg>
-                                </button>
                             </div>
 
                             {/* Stats */}

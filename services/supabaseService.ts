@@ -28,14 +28,7 @@ export const getEvents = async (): Promise<Event[]> => {
     return data.map((event: any) => ({
         ...event,
         imageUrl: event.image_url,
-        shifts: event.shifts.map((shift: any) => ({
-            ...shift,
-            startTime: shift.start_time,
-            endTime: shift.end_time,
-            requiredCount: shift.required_count,
-            filledCount: shift.filled_count
-        }))
-    })) as Event[];
+    }));
 };
 
 export const getEventById = async (id: string): Promise<Event | null> => {
@@ -65,6 +58,78 @@ export const getEventById = async (id: string): Promise<Event | null> => {
         }))
     } as Event;
 };
+
+export const createEvent = async (eventData: any) => {
+    // 1. Insert Event
+    const { data: event, error } = await supabase
+        .from('events')
+        .insert({
+            id: `e_${Date.now()}`,
+            name: eventData.name,
+            date: eventData.date,
+            location: eventData.location,
+            description: eventData.description,
+            image_url: eventData.imageUrl,
+            category: 'Community', // Default or passed
+            status: eventData.status || 'Published'
+        })
+        .select()
+        .single();
+
+    if (error) throw error;
+
+    // 2. Create Shifts (simplified)
+    const shiftsCount = eventData.shifts || 1;
+    const slotsPerShift = Math.ceil((eventData.totalSlots || 10) / shiftsCount);
+
+    const shiftsToInsert = Array.from({ length: shiftsCount }).map((_, i) => ({
+        id: `s_${event.id}_${i}`,
+        event_id: event.id,
+        role: 'General Volunteer',
+        start_time: '09:00',
+        end_time: '17:00',
+        required_count: slotsPerShift,
+        filled_count: 0
+    }));
+
+    const { error: shiftsError } = await supabase
+        .from('shifts')
+        .insert(shiftsToInsert);
+
+    if (shiftsError) console.error('Error creating shifts:', shiftsError);
+
+    return event;
+};
+
+export const updateEvent = async (id: string, eventData: any) => {
+    const { data, error } = await supabase
+        .from('events')
+        .update({
+            name: eventData.name,
+            date: eventData.date,
+            location: eventData.location,
+            description: eventData.description,
+            image_url: eventData.imageUrl,
+            status: eventData.status
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deleteEvent = async (id: string) => {
+    const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
+
 
 export const getUserById = async (id: string): Promise<User | null> => {
     const { data, error } = await supabase

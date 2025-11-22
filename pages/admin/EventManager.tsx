@@ -3,13 +3,11 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import { SparklesIcon, UsersIcon } from '../../components/Icons';
 import { generateEventDescription, findBestMatches } from '../../services/geminiService';
-import { uploadEventImage } from '../../services/supabaseService';
-import { useEvents } from '../../contexts/EventsContext';
+import { uploadEventImage, createEvent, updateEvent, getEventById } from '../../services/supabaseService';
 
 const EventManager: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { addEvent, updateEvent, getEventById } = useEvents();
   const eventId = searchParams.get('eventId');
   const isEditMode = !!eventId;
 
@@ -35,22 +33,25 @@ const EventManager: React.FC = () => {
   // Load event data if in edit mode
   useEffect(() => {
     if (isEditMode && eventId) {
-      const event = getEventById(eventId);
-      if (event) {
-        setEventName(event.name);
-        setDescription(event.description);
-        setImageUrl(event.imageUrl);
-        setDate(event.date);
-        setLocation(event.location);
-        setStatus(event.status);
-        setVolunteers(event.volunteers);
-        setTotalSlots(event.totalSlots);
-        setShifts(event.shifts);
-      }
+      const loadEvent = async () => {
+        const event = await getEventById(eventId);
+        if (event) {
+          setEventName(event.name);
+          setDescription(event.description);
+          setImageUrl(event.imageUrl);
+          setDate(event.date);
+          setLocation(event.location);
+          setStatus(event.status);
+          setVolunteers(event.volunteers);
+          setTotalSlots(event.totalSlots);
+          setShifts(event.shifts);
+        }
+      };
+      loadEvent();
     }
-  }, [isEditMode, eventId, getEventById]);
+  }, [isEditMode, eventId]);
 
-  const handleSaveEvent = (targetStatus: 'Published' | 'Draft' | 'Completed' | 'Ongoing') => {
+  const handleSaveEvent = async (targetStatus: 'Published' | 'Draft' | 'Completed' | 'Ongoing') => {
     // Validation
     if (!eventName || !description || !date || !location) {
       alert('Please fill in all required fields (Event Name, Description, Date, Location)');
@@ -69,18 +70,23 @@ const EventManager: React.FC = () => {
       shifts
     };
 
-    if (isEditMode && eventId) {
-      // Update existing event
-      updateEvent(eventId, eventData);
-      alert('Event updated successfully!');
-    } else {
-      // Create new event
-      addEvent(eventData);
-      alert('Event saved successfully!');
-    }
+    try {
+      if (isEditMode && eventId) {
+        // Update existing event
+        await updateEvent(eventId, eventData);
+        alert('Event updated successfully!');
+      } else {
+        // Create new event
+        await createEvent(eventData);
+        alert('Event saved successfully!');
+      }
 
-    // Navigate back to all events page
-    navigate('/admin/events');
+      // Navigate back to all events page
+      navigate('/admin/events');
+    } catch (error) {
+      console.error('Error saving event:', error);
+      alert('Failed to save event. Please try again.');
+    }
   };
 
   const handleAiGenerate = async () => {
