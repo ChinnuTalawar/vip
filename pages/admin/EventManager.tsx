@@ -83,9 +83,9 @@ const EventManager: React.FC = () => {
 
       // Navigate back to all events page
       navigate('/admin/events');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving event:', error);
-      alert('Failed to save event. Please try again.');
+      alert(`Failed to save event: ${error.message || 'Unknown error'}`);
     }
   };
 
